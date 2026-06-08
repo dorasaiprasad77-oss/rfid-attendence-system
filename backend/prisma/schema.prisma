@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Institution {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  departments  Department[]
+  classes      Class[]
+  students     Student[]
+  teachers     Teacher[]
+  devices      Device[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions String   @default("[]")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users User[]
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  avatar        String?
+  isActive      Boolean  @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  roleId        String
+  role          Role     @relation(fields: [roleId], references: [id])
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+model Department {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  classes Class[]
+  teachers Teacher[]
+}
+
+model Class {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  section       String?
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  students Student[]
+}
+
+model Student {
+  id            String   @id @default(uuid())
+  studentId     String   @unique
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  address       String?
+  gender        String?
+  dateOfBirth   String?
+  enrollmentDate String @default("")
+  guardianName  String?
+  guardianPhone String?
+  photo         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  classId       String
+  class         Class    @relation(fields: [classId], references: [id])
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  rfidCards     RfidCard[]
+  attendance    Attendance[]
+}
+
+model Teacher {
+  id            String   @id @default(uuid())
+  teacherId     String   @unique
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  address       String?
+  gender        String?
+  qualification String?
+  photo         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+}
+
+model RfidCard {
+  id          String   @id @default(uuid())
+  uid         String   @unique
+  cardType    String   @default("student")
+  issueDate   DateTime @default(now())
+  expiryDate  DateTime?
+  isActive    Boolean  @default(true)
+  isLost      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  studentId   String?
+  student     Student?  @relation(fields: [studentId], references: [id])
+
+  attendance  Attendance[]
+}
+
+model Device {
+  id            String   @id @default(uuid())
+  name          String
+  deviceId      String   @unique
+  location      String?
+  deviceType    String   @default("reader")
+  ipAddress     String?
+  port          Int?
+  isActive      Boolean  @default(true)
+  lastHeartbeat DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  attendance    Attendance[]
+}
+
+model Attendance {
+  id          String   @id @default(uuid())
+  scanTime    DateTime @default(now())
+  status      String   @default("present")
+  mode        String   @default("auto")
+  temperature Float?
+  remarks     String?
+
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  rfidCardId  String
+  rfidCard    RfidCard @relation(fields: [rfidCardId], references: [id])
+  deviceId    String?
+  device      Device?  @relation(fields: [deviceId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  entity      String
+  entityId    String?
+  description String?
+  metadata    String   @default("{}")
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  type        String   @default("info")
+  isRead      Boolean  @default(false)
+  link        String?
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}

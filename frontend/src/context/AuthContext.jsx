@@ -1,0 +1,89 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+const AuthContext = createContext(null);
+
+const API = '/api';
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Invalid token');
+      const data = await res.json();
+      if (data.success) {
+        setUser({ ...data.data, role: data.data.role.name });
+      } else {
+        logout();
+      }
+    } catch {
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const login = async (email, password) => {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    localStorage.setItem('token', data.data.token);
+    setToken(data.data.token);
+    setUser({ ...data.data.user, role: data.data.user.role });
+    return data.data.user;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  const apiFetch = async (endpoint, options = {}) => {
+    const headers = { ...options.headers };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+    const data = await res.json();
+    if (!data.success) {
+      const err = new Error(data.message || 'Request failed');
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, loading, login, logout, apiFetch }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
+};
