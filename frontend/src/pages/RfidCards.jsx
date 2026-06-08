@@ -154,11 +154,11 @@ export default function RfidCards() {
         <form id="card-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Card UID *</label>
-            <input className="form-input" value={form.uid} onChange={(e) => setForm({ ...form, uid: e.target.value })} required placeholder="e.g. A1:B2:C3:D4" />
+            <input className="form-input" value={form.uid} onChange={(e) => setForm({ ...form, uid: e.target.value })} required placeholder="Enter card UID" />
           </div>
           <div className="form-group">
             <label className="form-label">Student ID *</label>
-            <input className="form-input" value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })} required placeholder="e.g. STU0001" />
+            <input className="form-input" value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })} required placeholder="Enter student ID" />
           </div>
           <div className="form-group">
             <label className="form-label">Card Type</label>
