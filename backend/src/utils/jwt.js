@@ -1,6 +1,12 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
-const getSecret = () => process.env.JWT_SECRET || 'fallback-secret';
+const getSecret = () => {
+  return process.env.JWT_SECRET || (() => {
+    console.warn('WARNING: JWT_SECRET not set. Using ephemeral key. Set JWT_SECRET in .env for production.');
+    return crypto.randomBytes(32).toString('hex');
+  })();
+};
 
 export const generateToken = (payload) => {
   return jwt.sign(payload, getSecret(), {

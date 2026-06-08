@@ -27,19 +27,8 @@ export const scanCard = async (req, res, next) => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const existingToday = await prisma.attendance.findFirst({
-      where: {
-        studentId: card.student.id,
-        scanTime: { gte: todayStart },
-      },
-      orderBy: { scanTime: 'desc' },
-    });
-
-    let status = 'present';
-    if (existingToday) {
-      const hour = now.getHours();
-      status = hour >= 12 ? 'present' : 'late';
-    }
+    const hour = now.getHours();
+    let status = hour < 9 ? 'present' : (hour < 12 ? 'late' : 'present');
 
     const attendance = await prisma.attendance.create({
       data: {

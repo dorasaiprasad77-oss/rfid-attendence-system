@@ -11,6 +11,6 @@ router.get('/:id', authenticate, getCard);
 router.post('/', authenticate, assignCard);
 router.put('/:id', authenticate, updateCard);
 router.delete('/:id', authenticate, deleteCard);
-router.get('/lookup/:uid', lookupCard);
+router.get('/lookup/:uid', authenticate, lookupCard);
 
 export default router;

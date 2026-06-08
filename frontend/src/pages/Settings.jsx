@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 export default function Settings() {
-  const { user, apiFetch } = useAuth();
+  const { user, apiFetch, fetchProfile } = useAuth();
   const toast = useToast();
   const [profile, setProfile] = useState({
     firstName: user?.firstName || '',
@@ -25,6 +25,7 @@ export default function Settings() {
         method: 'PUT',
         body: JSON.stringify(profile),
       });
+      await fetchProfile();
       toast.success('Profile updated');
     } catch (err) {
       toast.error(err.message);

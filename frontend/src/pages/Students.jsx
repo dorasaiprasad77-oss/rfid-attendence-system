@@ -19,8 +19,6 @@ export default function Students() {
     studentId: '', firstName: '', lastName: '', email: '', phone: '',
     gender: '', classId: '', guardianName: '', guardianPhone: '',
   });
-  const [classes, setClasses] = useState([]);
-
   const loadStudents = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -37,21 +35,6 @@ export default function Students() {
   }, [search, apiFetch, toast]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
-
-  useEffect(() => {
-    const loadClasses = async () => {
-      try {
-        const data = await apiFetch('/students?limit=1');
-        if (data.data.students) {
-          const classSet = new Set();
-          data.data.students.forEach((s) => {
-            if (s.class) classSet.add(JSON.stringify(s.class));
-          });
-        }
-      } catch {}
-    };
-    loadClasses();
-  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Deactivate this student?')) return;

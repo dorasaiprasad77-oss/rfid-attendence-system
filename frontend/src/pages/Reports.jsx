@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
+const API = import.meta.env.VITE_API_URL || '';
+
 export default function Reports() {
   const { token } = useAuth();
   const toast = useToast();
@@ -11,16 +13,10 @@ export default function Reports() {
   const [reportType, setReportType] = useState('attendance');
   const [exporting, setExporting] = useState(false);
 
-  const handleExport = async () => {
+  const downloadExport = async (params) => {
     setExporting(true);
     try {
-      const params = new URLSearchParams();
-      if (dateFrom) params.set('dateFrom', dateFrom);
-      if (dateTo) params.set('dateTo', dateTo);
-      params.set('format', format);
-      params.set('type', reportType);
-
-      const res = await fetch(`/api/reports/export?${params}`, {
+      const res = await fetch(`${API}/api/reports/export?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -30,7 +26,8 @@ export default function Reports() {
       }
 
       const blob = await res.blob();
-      const ext = format === 'pdf' ? 'pdf' : format === 'excel' ? 'xlsx' : 'csv';
+      const fmt = params.get('format');
+      const ext = fmt === 'pdf' ? 'pdf' : fmt === 'excel' ? 'xlsx' : 'csv';
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -39,12 +36,21 @@ export default function Reports() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(`${format.toUpperCase()} report downloaded`);
+      toast.success(`${fmt.toUpperCase()} report downloaded`);
     } catch (err) {
       toast.error(err.message);
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleExport = () => {
+    const params = new URLSearchParams();
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    params.set('format', format);
+    params.set('type', reportType);
+    downloadExport(params);
   };
 
   return (
@@ -116,12 +122,9 @@ export default function Reports() {
             <button
               className="btn btn-secondary"
               onClick={() => {
-                setReportType('attendance');
-                setFormat('pdf');
                 const today = new Date().toISOString().split('T')[0];
-                setDateFrom(today);
-                setDateTo(today);
-                handleExport();
+                const params = new URLSearchParams({ format: 'pdf', type: 'attendance', dateFrom: today, dateTo: today });
+                downloadExport(params);
               }}
               disabled={exporting}
             >
@@ -130,13 +133,11 @@ export default function Reports() {
             <button
               className="btn btn-secondary"
               onClick={() => {
-                setReportType('daily');
-                setFormat('excel');
                 const start = new Date();
                 start.setDate(start.getDate() - 7);
-                setDateFrom(start.toISOString().split('T')[0]);
-                setDateTo(new Date().toISOString().split('T')[0]);
-                handleExport();
+                const today = new Date().toISOString().split('T')[0];
+                const params = new URLSearchParams({ format: 'excel', type: 'daily', dateFrom: start.toISOString().split('T')[0], dateTo: today });
+                downloadExport(params);
               }}
               disabled={exporting}
             >
@@ -145,11 +146,8 @@ export default function Reports() {
             <button
               className="btn btn-secondary"
               onClick={() => {
-                setReportType('students');
-                setFormat('csv');
-                setDateFrom('');
-                setDateTo('');
-                handleExport();
+                const params = new URLSearchParams({ format: 'csv', type: 'students' });
+                downloadExport(params);
               }}
               disabled={exporting}
             >

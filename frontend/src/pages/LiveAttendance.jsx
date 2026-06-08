@@ -27,8 +27,10 @@ export default function LiveAttendance() {
     };
     load();
 
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const wsHost = apiUrl ? new URL(apiUrl).host : window.location.host;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socketUrl = `${protocol}//${window.location.host}`;
+    const socketUrl = `${protocol}//${wsHost}`;
     try {
       const ws = new WebSocket(socketUrl);
       ws.onmessage = (event) => {

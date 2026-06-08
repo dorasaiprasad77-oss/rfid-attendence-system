@@ -15,9 +15,9 @@ export const errorResponse = (res, message = 'Server Error', statusCode = 500, e
   return res.status(statusCode).json(response);
 };
 
-export const paginate = (page = 1, limit = 10) => {
-  const p = Math.max(1, parseInt(page));
-  const l = Math.min(100, Math.max(1, parseInt(limit)));
+export const paginate = (page, limit) => {
+  const p = Math.max(1, parseInt(page) || 1);
+  const l = Math.min(100, Math.max(1, parseInt(limit) || 10));
   return { skip: (p - 1) * l, take: l, page: p, limit: l };
 };
 

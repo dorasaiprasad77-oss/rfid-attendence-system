@@ -1,12 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import * as XLSX from 'xlsx';
+import { errorResponse } from '../utils/helpers.js';
 
 const prisma = new PrismaClient();
 
 export const exportReport = async (req, res, next) => {
   try {
     const { format = 'pdf', type = 'attendance', dateFrom, dateTo } = req.query;
+
+    if (!['attendance', 'daily', 'students'].includes(type)) {
+      return errorResponse(res, 'Invalid report type. Use: attendance, daily, or students.', 400);
+    }
+    if (!['pdf', 'excel', 'csv'].includes(format)) {
+      return errorResponse(res, 'Invalid format. Use: pdf, excel, or csv.', 400);
+    }
 
     let data;
     const where = {};

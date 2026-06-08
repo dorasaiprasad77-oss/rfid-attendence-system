@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
       data = await res.json();
     } catch {
       if (!res.ok) {
-        throw new Error(`Server error (${res.status}). Make sure the backend is running on port 5000.`);
+        throw new Error(`Server error (${res.status}). Make sure the backend server is running.`);
       }
       throw new Error('Invalid response from server');
     }
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
       data = await res.json();
     } catch {
       if (!res.ok) {
-        throw new Error(`Server error (${res.status}). Make sure the backend is running on port 5000.`);
+        throw new Error(`Server error (${res.status}). Make sure the backend server is running.`);
       }
       throw new Error('Invalid response from server');
     }
@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch, fetchProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -40,7 +40,7 @@ export const createDevice = async (req, res, next) => {
     const existing = await prisma.device.findUnique({ where: { deviceId } });
     if (existing) return errorResponse(res, 'Device ID already exists.', 409);
     const device = await prisma.device.create({
-      data: { name, deviceId, location, deviceType, ipAddress, port: port ? parseInt(port) : null, institutionId: req.user.institutionId },
+      data: { name, deviceId, location, deviceType, ipAddress, port: port !== undefined && port !== '' && port !== null ? parseInt(port) : null, institutionId: req.user.institutionId },
     });
     return successResponse(res, device, 'Device created.', 201);
   } catch (err) {
@@ -62,7 +62,7 @@ export const updateDevice = async (req, res, next) => {
         ...(location !== undefined && { location }),
         ...(deviceType !== undefined && { deviceType }),
         ...(ipAddress !== undefined && { ipAddress }),
-        ...(port !== undefined && { port: parseInt(port) }),
+        ...(port !== undefined && port !== null && port !== '' && { port: parseInt(port) }),
         ...(isActive !== undefined && { isActive }),
       },
     });
