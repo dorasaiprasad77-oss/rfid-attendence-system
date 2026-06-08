@@ -5,6 +5,77 @@ import { successResponse, errorResponse } from '../utils/helpers.js';
 
 const prisma = new PrismaClient();
 
+export const register = async (req, res, next) => {
+  try {
+    const { email, password, firstName, lastName, institutionName } = req.body;
+    if (!email || !password || !firstName || !lastName) {
+      return errorResponse(res, 'Email, password, first name, and last name are required.', 400);
+    }
+    if (password.length < 6) {
+      return errorResponse(res, 'Password must be at least 6 characters.', 400);
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return errorResponse(res, 'Email is already registered.', 409);
+    }
+
+    let institution = await prisma.institution.findFirst();
+    if (!institution) {
+      institution = await prisma.institution.create({
+        data: {
+          name: institutionName || 'Default Institution',
+          code: 'DEFAULT',
+        },
+      });
+    }
+
+    let adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
+    if (!adminRole) {
+      const roles = ['admin', 'manager', 'operator'];
+      for (const roleName of roles) {
+        await prisma.role.create({
+          data: { name: roleName, permissions: JSON.stringify(roleName === 'admin' ? ['all'] : ['read', 'write']) },
+        });
+      }
+      adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        roleId: adminRole.id,
+        institutionId: institution.id,
+      },
+    });
+
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: adminRole.name,
+      institutionId: institution.id,
+    });
+
+    return successResponse(res, {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: adminRole.name,
+        institution: { id: institution.id, name: institution.name },
+      },
+    }, 'Registration successful.', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;

@@ -802,6 +802,36 @@ img { max-width: 100%; display: block; }
   border-radius: var(--radius-sm);
 }
 
+.login-toggle-text {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.login-toggle-link {
+  color: var(--primary);
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.login-toggle-link:hover {
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .login-toggle-link {
+  color: #60a5fa;
+}
+
+@media (max-width: 480px) {
+  .login-card .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Sidebar */
 .sidebar {
   position: fixed;

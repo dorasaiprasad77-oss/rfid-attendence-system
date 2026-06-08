@@ -58,6 +58,28 @@ export function AuthProvider({ children }) {
     return data.data.user;
   };
 
+  const register = async (email, password, firstName, lastName, institutionName) => {
+    const res = await fetch(`${API}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, firstName, lastName, institutionName }),
+    });
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      if (!res.ok) {
+        throw new Error(`Server error (${res.status}). Make sure the backend is running on port 5000.`);
+      }
+      throw new Error('Invalid response from server');
+    }
+    if (!data.success) throw new Error(data.message || 'Registration failed');
+    localStorage.setItem('token', data.data.token);
+    setToken(data.data.token);
+    setUser({ ...data.data.user, role: data.data.user.role });
+    return data.data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -89,7 +111,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, apiFetch }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch }}>
       {children}
     </AuthContext.Provider>
   );
