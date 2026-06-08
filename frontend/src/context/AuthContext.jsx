@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const AuthContext = createContext(null);
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const res = await fetch(`${API}/auth/profile`, {
+      const res = await fetch(`${API}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Invalid token');
@@ -37,13 +37,21 @@ export function AuthProvider({ children }) {
   }, [fetchProfile]);
 
   const login = async (email, password) => {
-    const res = await fetch(`${API}/auth/login`, {
+    const res = await fetch(`${API}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      if (!res.ok) {
+        throw new Error(`Server error (${res.status}). Make sure the backend is running on port 5000.`);
+      }
+      throw new Error('Invalid response from server');
+    }
+    if (!data.success) throw new Error(data.message || 'Login failed');
     localStorage.setItem('token', data.data.token);
     setToken(data.data.token);
     setUser({ ...data.data.user, role: data.data.user.role });
@@ -64,8 +72,13 @@ export function AuthProvider({ children }) {
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
-    const res = await fetch(`${API}${endpoint}`, { ...options, headers });
-    const data = await res.json();
+    const res = await fetch(`${API}/api${endpoint}`, { ...options, headers });
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`Request failed (${res.status})`);
+    }
     if (!data.success) {
       const err = new Error(data.message || 'Request failed');
       err.status = res.status;
